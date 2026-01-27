@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NFC 跳转</title>
+  <style>
+    body{ font-family: system-ui, -apple-system; padding:20px; background:#fafafa; color:#111; }
+    .box{ background:#fff; padding:16px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+  </style>
+</head>
+<body>
+  <div class="box" id="box">
+    <h2>正在处理 NFC 跳转…</h2>
+    <p id="msg">如果页面没有自动跳转，请检查标签或稍后重试。</p>
+  </div>
+
+  <script>
+    function getParam(name){
+      const params = new URLSearchParams(location.search);
+      return params.get(name);
+    }
+
+    async function redirectById(id){
+      try{
+        const res = await fetch('/data/files.json', {cache: 'no-store'});
+        const list = await res.json();
+        const found = list.find(x => x.slug === id);
+        if(found){
+          const pdfUrl = new URL('/pdfs/' + found.filename, location.origin).toString();
+          location.replace(pdfUrl);
+        } else {
+          document.getElementById('msg').textContent = '未找到对应文档：' + id;
+        }
+      }catch(err){
+        document.getElementById('msg').textContent = '读取文件列表失败：' + err;
+      }
+    }
+
+    (function(){
+      const id = getParam('id');
+      if(!id){
+        document.getElementById('msg').textContent = '缺少 id 参数。NFC 标签 URL 应为 /nfc/?id=your-slug';
+        return;
+      }
+      redirectById(id);
+    })();
+  </script>
+</body>
+</html>
