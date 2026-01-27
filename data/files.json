@@ -5,5 +5,12 @@
     "filename": "example.pdf",
     "description": "这是一个示例 PDF。把真实 PDF 上传到 pdfs/ 并在此添加对应记录。",
     "created_at": "2026-01-26"
+  },
+  {
+    "slug": "dog-food-list",
+    "title": "狗狗食物清单",
+    "filename": "dog-food-list.pdf",
+    "description": "宠物食品清单",
+    "created_at": "2026-01-27"
   }
 ]
