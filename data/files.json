@@ -12,5 +12,19 @@
     "filename": "dog-food-list.pdf",
     "description": "宠物食品清单",
     "created_at": "2026-01-27"
+  },
+  {
+    "slug": "Milk-Bottle",
+    "title": "奶瓶机使用指南",
+    "filename": "Milk-Bottle.pdf",
+    "description": "奶瓶机使用指南",
+    "created_at": "2026-01-28"
+  },
+  {
+    "slug": "Washer-and-Dryer",
+    "title": "洗烘指南",
+    "filename": "Washer-and-Dryer.pdf",
+    "description": "洗烘指南",
+    "created_at": "2026-01-28"
   }
 ]
