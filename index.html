@@ -3,48 +3,81 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>NFC 跳转</title>
-  <style>
-    body{ font-family: system-ui, -apple-system; padding:20px; background:#fafafa; color:#111; }
-    .box{ background:#fff; padding:16px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
-  </style>
+  <title>NFC Library — 我的 PDF 库</title>
+  <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <div class="box" id="box">
-    <h2>正在处理 NFC 跳转…</h2>
-    <p id="msg">如果页面没有自动跳转，请检查标签或稍后重试。</p>
-  </div>
+  <header>
+    <h1>NFC Library — 我的 PDF 库</h1>
+    <p>触碰 NFC 标签可以直接打开对应的 PDF。将 PDF 上传到 <code>/pdfs/</code>，并在 <code>data/files.json</code> 中添加记录。</p>
+  </header>
+
+  <main>
+    <section id="list">
+      <p>正在加载文档列表…</p>
+    </section>
+  </main>
+
+  <template id="item-template">
+    <article class="doc">
+      <h2 class="title"></h2>
+      <p class="desc"></p>
+      <div class="links">
+        <a class="pdf-link" target="_blank" rel="noopener">打开 PDF</a>
+        <button class="copy-btn">复制 NFC URL</button>
+        <a class="nfc-link" target="_blank" rel="noopener">打开 NFC 链接</a>
+        <img class="qr" alt="QR code" />
+      </div>
+    </article>
+  </template>
 
   <script>
-    function getParam(name){
-      const params = new URLSearchParams(location.search);
-      return params.get(name);
+    const baseHost = (location.origin + location.pathname).replace(/\/$/, '');
+    function getBaseURL() {
+      return location.origin + location.pathname.replace(/\/$/, '');
     }
 
-    async function redirectById(id){
+    function encodeForQR(s){ return encodeURIComponent(s); }
+
+    async function loadList(){
       try{
-        const res = await fetch('/data/files.json', {cache: 'no-store'});
+        const res = await fetch('data/files.json', {cache: 'no-store'});
         const list = await res.json();
-        const found = list.find(x => x.slug === id);
-        if(found){
-          const pdfUrl = new URL('/pdfs/' + found.filename, location.origin).toString();
-          location.replace(pdfUrl);
-        } else {
-          document.getElementById('msg').textContent = '未找到对应文档：' + id;
-        }
-      }catch(err){
-        document.getElementById('msg').textContent = '读取文件列表失败：' + err;
+        const container = document.getElementById('list');
+        container.innerHTML = '';
+        const tpl = document.getElementById('item-template');
+        const baseURL = getBaseURL();
+        list.forEach(item => {
+          const node = tpl.content.cloneNode(true);
+          node.querySelector('.title').textContent = item.title || item.filename;
+          node.querySelector('.desc').textContent = item.description || '';
+          const pdfLink = node.querySelector('.pdf-link');
+          const pdfUrl = (new URL('pdfs/' + item.filename, baseURL)).toString();
+          pdfLink.href = pdfUrl;
+          const nfcUrl = (new URL('nfc/?id=' + encodeURIComponent(item.slug), baseURL)).toString();
+          const nfcLinkEl = node.querySelector('.nfc-link');
+          nfcLinkEl.href = nfcUrl;
+          nfcLinkEl.textContent = '打开 NFC 链接';
+          const qrImg = node.querySelector('.qr');
+          qrImg.src = 'https://chart.googleapis.com/chart?cht=qr&chs=150x150&chl=' + encodeForQR(nfcUrl);
+          qrImg.width = 150;
+          qrImg.height = 150;
+          node.querySelector('.copy-btn').addEventListener('click', async () => {
+            try {
+              await navigator.clipboard.writeText(nfcUrl);
+              alert('已复制：' + nfcUrl);
+            } catch (e) {
+              prompt('复制失败，请手动复制 URL：', nfcUrl);
+            }
+          });
+          container.appendChild(node);
+        });
+      } catch (err){
+        document.getElementById('list').textContent = '加载失败：' + err;
       }
     }
 
-    (function(){
-      const id = getParam('id');
-      if(!id){
-        document.getElementById('msg').textContent = '缺少 id 参数。NFC 标签 URL 应为 /nfc/?id=your-slug';
-        return;
-      }
-      redirectById(id);
-    })();
+    loadList();
   </script>
 </body>
 </html>
